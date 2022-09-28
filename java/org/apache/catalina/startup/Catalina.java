@@ -755,11 +755,11 @@ public class Catalina {
      * Start a new server instance.
      */
     public void start() {
-
+        //1. 如果持有的Server实例为空，就解析server.xml创建出来
         if (getServer() == null) {
             load();
         }
-
+        //2. 如果创建失败，报错退出
         if (getServer() == null) {
             log.fatal(sm.getString("catalina.noServer"));
             return;
@@ -767,6 +767,7 @@ public class Catalina {
 
         long t1 = System.nanoTime();
 
+        //3.启动Server
         // Start the new server
         try {
             getServer().start();
@@ -788,7 +789,7 @@ public class Catalina {
             // Generate loader which will load all generated classes
             generateLoader();
         }
-
+        //创建并注册关闭钩子
         // Register shutdown hook
         if (useShutdownHook) {
             if (shutdownHook == null) {
@@ -805,7 +806,7 @@ public class Catalina {
                         false);
             }
         }
-
+        //用await方法监听停止请求
         if (await) {
             await();
             stop();

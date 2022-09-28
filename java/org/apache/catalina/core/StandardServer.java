@@ -505,11 +505,14 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
         service.setServer(this);
 
         synchronized (servicesLock) {
+            //创建一个长度+1的新数组
             Service results[] = new Service[services.length + 1];
+            //将老的数据复制过去
             System.arraycopy(services, 0, results, 0, services.length);
             results[services.length] = service;
             services = results;
 
+            //启动Service组件
             if (getState().isAvailable()) {
                 try {
                     service.start();

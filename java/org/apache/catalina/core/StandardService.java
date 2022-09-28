@@ -59,12 +59,14 @@ public class StandardService extends LifecycleMBeanBase implements Service {
     /**
      * The name of this service.
      */
+    //名字
     private String name = null;
 
 
     /**
      * The <code>Server</code> that owns this Service, if any.
      */
+    //Server实例
     private Server server = null;
 
     /**
@@ -76,6 +78,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
     /**
      * The set of Connectors associated with this Service.
      */
+    //连接器数组
     protected Connector connectors[] = new Connector[0];
     private final Object connectorsLock = new Object();
 
@@ -84,6 +87,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
      */
     protected final ArrayList<Executor> executors = new ArrayList<>();
 
+    //对应的Engine容器
     private Engine engine = null;
 
     private ClassLoader parentClassLoader = null;
@@ -91,6 +95,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
     /**
      * Mapper.
      */
+    //映射器及其监听器
     protected final Mapper mapper = new Mapper();
 
 
@@ -424,9 +429,11 @@ public class StandardService extends LifecycleMBeanBase implements Service {
         if(log.isInfoEnabled()) {
             log.info(sm.getString("standardService.start.name", this.name));
         }
+        //1. 触发启动监听器
         setState(LifecycleState.STARTING);
 
         // Start our defined Container first
+        //2. 先启动Engine，Engine会启动它的子容器
         if (engine != null) {
             synchronized (engine) {
                 engine.start();
@@ -438,10 +445,11 @@ public class StandardService extends LifecycleMBeanBase implements Service {
                 executor.start();
             }
         }
-
+        //3. 再启动Mapper监听器
         mapperListener.start();
 
         // Start our defined Connectors second
+        //4. 最后启动连接器，连接器会启动它的子组件，比如EndPoint
         synchronized (connectorsLock) {
             for (Connector connector: connectors) {
                 // If it has already failed, don't try and start it

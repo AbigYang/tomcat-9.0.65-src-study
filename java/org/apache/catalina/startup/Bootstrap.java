@@ -61,6 +61,7 @@ public final class Bootstrap {
     private static final Pattern PATH_PATTERN = Pattern.compile("(\"[^\"]*\")|(([^,])*)");
 
     static {
+        // 配置系统变量catalina.home，catalina.home为服务目录
         // Will always be non-null
         String userDir = System.getProperty("user.dir");
 
@@ -442,6 +443,7 @@ public final class Bootstrap {
                 // Don't set daemon until init() has completed
                 Bootstrap bootstrap = new Bootstrap();
                 try {
+                    // 初始化类加载器，实例化catalina
                     bootstrap.init();
                 } catch (Throwable t) {
                     handleThrowable(t);
@@ -465,7 +467,9 @@ public final class Bootstrap {
 
             if (command.equals("startd")) {
                 args[args.length - 1] = "start";
+                // 调用catalina.load(),加载server.xml
                 daemon.load(args);
+                // 调用catalina.start()
                 daemon.start();
             } else if (command.equals("stopd")) {
                 args[args.length - 1] = "stop";
