@@ -100,21 +100,29 @@ public class TaskQueue extends LinkedBlockingQueue<Runnable> {
 
 
     @Override
+    // 线程池调用任务队列的方法时，当前线程数肯定已经大于核心线程数了
     public boolean offer(Runnable o) {
       //we can't do any checks
         if (parent==null) {
             return super.offer(o);
         }
         //we are maxed out on threads, simply queue the object
+        // 线程数达到最大线程，tomcat会尝试往队列中添加
         if (parent.getPoolSize() == parent.getMaximumPoolSize()) {
             return super.offer(o);
         }
+        // 以下就是线程数为大于核心线程数，且小于最大线程数
+        // 表明是可以创建新线程的，那到底要不要创建呢？分两种情况：
+
+        // 已提交的任务数小于当前线程数，说明存在空闲线程，不需要创建新线程
         //we have idle threads, just add it to the queue
         if (parent.getSubmittedCount()<=(parent.getPoolSize())) {
             return super.offer(o);
         }
+        // 已提交的任务数大于当前线程数，不存在空闲线程，需要创建新线程
         //if we have less threads than maximum force creation of a new thread
         if (parent.getPoolSize()<parent.getMaximumPoolSize()) {
+            // 只有当前线程数大于核心线程数、小于最大线程数，并且已提交的任务个数大于当前线程数时，也就是说线程不够用了，但是线程数又没达到极限，才会去创建新的线程
             return false;
         }
         //if we reached here, we need to add it to the queue

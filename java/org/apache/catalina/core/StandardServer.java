@@ -496,6 +496,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
 
     /**
      * Add a new Service to the set of defined Services.
+     * digester解析xml时调用
      *
      * @param service The Service to be added
      */
@@ -512,7 +513,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
             results[services.length] = service;
             services = results;
 
-            //启动Service组件
+            //在 STARTING、STARTED、STOPPING_PREP时启动Service组件
             if (getState().isAvailable()) {
                 try {
                     service.start();
@@ -522,6 +523,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
             }
 
             // Report this property change to interested listeners
+            // 触发监听事件
             support.firePropertyChange("service", null, service);
         }
 

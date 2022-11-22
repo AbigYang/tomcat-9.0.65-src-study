@@ -327,6 +327,11 @@ import org.apache.tomcat.util.res.StringManager;
  * @since 1.5
  * @author Doug Lea
  */
+
+/**
+ * Tomcat 扩展了 Java 线程池的核心类 ThreadPoolExecutor，并重写了它的 execute 方法，定制了自己的任务处理流程。
+ * 同时 Tomcat 还实现了定制版的任务队列，重写了 offer 方法，使得在任务队列长度无限制的情况下，线程池仍然有机会创建新的线程。
+ */
 public class ThreadPoolExecutor extends AbstractExecutorService {
 
     protected static final StringManager sm = StringManager.getManager(ThreadPoolExecutor.class);
@@ -500,6 +505,8 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * latter did not start executing the task yet.
      * This number is always greater or equal to {@link #getActiveCount()}.
      */
+    // 表示已提交到线程池，但还没执行完成的个数
+    // 在于任务队列的长度无限制的情况下，让线程池有机会创建新线程
     private final AtomicInteger submittedCount = new AtomicInteger(0);
     private final AtomicLong lastContextStoppedTime = new AtomicLong(0L);
 
@@ -1395,11 +1402,15 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      *
      * @deprecated This will be removed in Tomcat 10.1.x onwards
      */
+    // 在总线程数达到maximumPoolSize时，继续尝试将任务添加到队列中（而不是直接执行失败策略），如果缓冲队列也满了，插入失败，执行失败策略
     @Deprecated
     public void execute(Runnable command, long timeout, TimeUnit unit) {
+        // +1
         submittedCount.incrementAndGet();
         try {
+            // 为juc中ThreadPoolExecutor的实现逻辑
             executeInternal(command);
+        //如果总线程数达到maximumPoolSize，Java原生线程池执行拒绝策略
         } catch (RejectedExecutionException rx) {
             if (getQueue() instanceof TaskQueue) {
                 // If the Executor is close to maximum pool size, concurrent
@@ -1408,8 +1419,10 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
                 // If this happens, add them to the queue.
                 final TaskQueue queue = (TaskQueue) getQueue();
                 try {
+                    // 继续尝试把任务放到任务队列中去
                     if (!queue.force(command, timeout, unit)) {
                         submittedCount.decrementAndGet();
+                        // 如果队列满了就执行拒绝策略
                         throw new RejectedExecutionException(sm.getString("threadPoolExecutor.queueFull"));
                     }
                 } catch (InterruptedException x) {
@@ -1417,6 +1430,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
                     throw new RejectedExecutionException(x);
                 }
             } else {
+                // 失败或异常 -1
                 submittedCount.decrementAndGet();
                 throw rx;
             }

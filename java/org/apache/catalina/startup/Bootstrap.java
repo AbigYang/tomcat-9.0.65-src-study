@@ -443,7 +443,7 @@ public final class Bootstrap {
                 // Don't set daemon until init() has completed
                 Bootstrap bootstrap = new Bootstrap();
                 try {
-                    // 初始化类加载器，实例化catalina
+                    // 初始化类加载器，反射实例化catalina
                     bootstrap.init();
                 } catch (Throwable t) {
                     handleThrowable(t);
@@ -476,7 +476,10 @@ public final class Bootstrap {
                 daemon.stop();
             } else if (command.equals("start")) {
                 daemon.setAwait(true);
+                // 1.在catalina中通过反射调用server的load()，解析server.xml为server、service、engine等对象
+                // 2.在catalina中通过反射调用server的init()
                 daemon.load(args);
+                // 在catalina中通过反射调用server的start()
                 daemon.start();
                 if (null == daemon.getServer()) {
                     System.exit(1);

@@ -381,20 +381,33 @@ public class Catalina {
         connectorAttrs.add("portOffset");
         fakeAttributes.put(Connector.class, connectorAttrs);
         digester.setFakeAttributes(fakeAttributes);
+        // 设置是否使用线程上下文类加载器
         digester.setUseContextClassLoader(true);
 
+        /*
+         * addObjectCreate:对象创建规则
+         * addSetProperties:属性设置规则
+         * addSetNext:设置下一个规则
+         * addRule:自定义规则
+         * addRuleSet:自定义规则集
+         */
         // Configure the actions we will be using
+        // 1.如果Server节点没有className属性，将创建org.apache.catalina.core.StandardServer对象
+        // 2.如果Server节点有className属性，将创建指定的（className）对象
         digester.addObjectCreate("Server",
                                  "org.apache.catalina.core.StandardServer",
                                  "className");
+        // 将指定节点的属性映射到对象，即将port和shutdown属性映射创建的Server对象
         digester.addSetProperties("Server");
+        // 匹配到Server节点，将调用本实例（catalina）的setServer方法，参数为Server对象
         digester.addSetNext("Server",
                             "setServer",
                             "org.apache.catalina.Server");
-
+        // 为Server/GlobalNamingResources创建规则
         digester.addObjectCreate("Server/GlobalNamingResources",
                                  "org.apache.catalina.deploy.NamingResourcesImpl");
         digester.addSetProperties("Server/GlobalNamingResources");
+        // 调用Server的setGlobalNamingResources方法，参数为上面创建的NamingResourcesImpl
         digester.addSetNext("Server/GlobalNamingResources",
                             "setGlobalNamingResources",
                             "org.apache.catalina.deploy.NamingResourcesImpl");
@@ -405,11 +418,12 @@ public class Catalina {
         digester.addSetNext("Server/Listener",
                             "addLifecycleListener",
                             "org.apache.catalina.LifecycleListener");
-
+        // 为Server/Service创建规则
         digester.addObjectCreate("Server/Service",
                                  "org.apache.catalina.core.StandardService",
                                  "className");
         digester.addSetProperties("Server/Service");
+        // 调用Server的addService，参数为上面创建的StandardService
         digester.addSetNext("Server/Service",
                             "addService",
                             "org.apache.catalina.Service");
@@ -605,6 +619,7 @@ public class Catalina {
         } else {
             try (ConfigurationSource.Resource resource = ConfigFileLoader.getSource().getServerXml()) {
                 // Create and execute our Digester
+                // 创建解析xml的解析器
                 Digester digester = start ? createStartDigester() : createStopDigester();
                 InputStream inputStream = resource.getInputStream();
                 InputSource inputSource = new InputSource(resource.getURI().toURL().toString());
@@ -614,6 +629,7 @@ public class Catalina {
                     digester.startGeneratingCode();
                     generateClassHeader(digester, start);
                 }
+                // 解析server.xml到server
                 digester.parse(inputSource);
                 if (generateCode) {
                     generateClassFooter(digester);
@@ -793,6 +809,7 @@ public class Catalina {
         // Register shutdown hook
         if (useShutdownHook) {
             if (shutdownHook == null) {
+                // 调用server的stop()
                 shutdownHook = new CatalinaShutdownHook();
             }
             Runtime.getRuntime().addShutdownHook(shutdownHook);
