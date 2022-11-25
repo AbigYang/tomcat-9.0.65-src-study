@@ -1176,15 +1176,18 @@ public abstract class AbstractEndpoint<S,U> {
             }
             SocketProcessorBase<S> sc = null;
             if (processorCache != null) {
+                // 从对象池中取
                 sc = processorCache.pop();
             }
-            if (sc == null) {
+            if (sc == null) {// 否则新建SocketProcessor
                 sc = createSocketProcessor(socketWrapper, event);
-            } else {
+            } else {// 存在则从新赋值
                 sc.reset(socketWrapper, event);
             }
+            // NioEndpoint启动阶段创建的线程池
             Executor executor = getExecutor();
             if (dispatch && executor != null) {
+                // 交给线程池处理
                 executor.execute(sc);
             } else {
                 sc.run();

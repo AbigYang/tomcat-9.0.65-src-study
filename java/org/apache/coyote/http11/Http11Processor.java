@@ -396,6 +396,7 @@ public class Http11Processor extends AbstractProcessor {
             if (getErrorState().isIoAllowed()) {
                 try {
                     rp.setStage(org.apache.coyote.Constants.STAGE_SERVICE);
+                    // 调用CoyoteAdapter.service(),最终通过connector.getService().getContainer().getPipeline().getFirst().invoke(request, response)调用容器执行
                     getAdapter().service(request, response);
                     // Handle when the response was committed before a serious
                     // error occurred.  Throwing a ServletException should both

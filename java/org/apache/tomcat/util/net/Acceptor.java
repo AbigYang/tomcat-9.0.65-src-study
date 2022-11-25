@@ -114,6 +114,7 @@ public class Acceptor<U> implements Runnable {
 
                 try {
                     //if we have reached max connections, wait
+                    // 获取连接控制器LimitLatch共享锁，达到最大连接数就等待
                     endpoint.countUpOrAwaitConnection();
 
                     // Endpoint might have been paused while waiting for latch
@@ -126,9 +127,11 @@ public class Acceptor<U> implements Runnable {
                     try {
                         // Accept the next incoming connection from the server
                         // socket
+                        // SocketChannel result = serverSock.accept();
                         socket = endpoint.serverSocketAccept();
                     } catch (Exception ioe) {
                         // We didn't get a socket
+                        // 释放锁
                         endpoint.countDownConnection();
                         if (endpoint.isRunning()) {
                             // Introduce delay if necessary
@@ -146,6 +149,7 @@ public class Acceptor<U> implements Runnable {
                     if (!stopCalled && !endpoint.isPaused()) {
                         // setSocketOptions() will hand the socket off to
                         // an appropriate processor if successful
+                        // 组装nioChannel到SocketWrapper，注册到poller
                         if (!endpoint.setSocketOptions(socket)) {
                             endpoint.closeSocket(socket);
                         }
