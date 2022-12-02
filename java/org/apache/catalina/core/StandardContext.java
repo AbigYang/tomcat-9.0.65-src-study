@@ -5026,6 +5026,11 @@ public class StandardContext extends ContainerBase
         if (getLoader() == null) {
             WebappLoader webappLoader = new WebappLoader();
             webappLoader.setDelegate(getDelegate());
+            //1. this.loader = loader
+            //2. loader.setContext(this)
+            //3. loader.startInternal()==>
+            //      3.1. loader.classLoader=create WebappClassLoaderBase(parent=context.getParentClassLoader())
+            //      3.2. loader.parentClassLoader = context.getParentClassLoader()
             setLoader(webappLoader);
         }
 
@@ -5076,6 +5081,7 @@ public class StandardContext extends ContainerBase
 
 
         // Binding thread
+        // Thread.currentThread().setContextClassLoader(loader.getClassLoader());
         ClassLoader oldCCL = bindThread();
 
         try {
@@ -5606,7 +5612,12 @@ public class StandardContext extends ContainerBase
         if (!getState().isAvailable()) {
             return;
         }
-
+        // WebappLoader周期性的检查WEB-INF/classes和WEB-INF/lwib目录下的类文件
+        // 1.停止和销毁 Context 容器及其所有子容器，子容器其实就是 Wrapper，也就是说 Wrapper 里面 Servlet 实例也被销毁了
+        // 2.停止和销毁 Context 容器关联的 Listener 和 Filter。
+        // 3.停止和销毁 Context 下的 Pipeline 和各种 Valve。
+        // 4.停止和销毁 Context 的类加载器，以及类加载器加载的类文件资源
+        // 5.启动 Context 容器，在这个过程中会重新创建前面四步被销毁的资源。
         Loader loader = getLoader();
         if (loader != null) {
             try {
@@ -5616,6 +5627,7 @@ public class StandardContext extends ContainerBase
                         "standardContext.backgroundProcess.loader", loader), e);
             }
         }
+        // Session管理器周期性的检查是否有过期的Session
         Manager manager = getManager();
         if (manager != null) {
             try {
@@ -5626,6 +5638,7 @@ public class StandardContext extends ContainerBase
                         e);
             }
         }
+        //周期性的检查静态资源是否有变化
         WebResourceRoot resources = getResources();
         if (resources != null) {
             try {
@@ -5646,6 +5659,7 @@ public class StandardContext extends ContainerBase
                         resources), e);
             }
         }
+        //调用父类ContainerBase的backgroundProcess方法
         super.backgroundProcess();
     }
 

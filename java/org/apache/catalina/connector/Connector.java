@@ -1007,7 +1007,7 @@ public class Connector extends LifecycleMBeanBase  {
     protected void initInternal() throws LifecycleException {
 
         super.initInternal();
-
+        // protocolHandler在new构造时就已创建，如Http11NioProtocol
         if (protocolHandler == null) {
             throw new LifecycleException(
                     sm.getString("coyoteConnector.protocolHandlerInstantiationFailed"));

@@ -1046,6 +1046,9 @@ public class Catalina {
 
         ClassLoader parentClassLoader = null;
 
+        /**
+         * 在load()解析xml时将sharedClassLoader注入到容器中
+         */
         @Override
         public void begin(String namespace, String name, Attributes attributes)
             throws Exception {

@@ -405,7 +405,7 @@ public class WebappLoader extends LifecycleMBeanBase
 
         // Construct a class loader based on our current repositories list
         try {
-
+            // WebappClassLoaderBase
             classLoader = createClassLoader();
             classLoader.setResources(context.getResources());
             classLoader.setDelegate(this.delegate);
@@ -518,6 +518,7 @@ public class WebappLoader extends LifecycleMBeanBase
 
     /**
      * Create associated classLoader.
+     * 构建一个paramClassLoader为context.getParentClassLoader的WebappClassLoaderBase，默认为ParallelWebappClassLoader
      */
     private WebappClassLoaderBase createClassLoader()
         throws Exception {

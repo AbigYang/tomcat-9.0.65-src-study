@@ -312,6 +312,7 @@ public class HostConfig implements LifecycleListener {
 
         // Process the event that has occurred
         if (event.getType().equals(Lifecycle.PERIODIC_EVENT)) {
+            // 热部署
             check();
         } else if (event.getType().equals(Lifecycle.BEFORE_START_EVENT)) {
             beforeStart();
@@ -1647,10 +1648,14 @@ public class HostConfig implements LifecycleListener {
 
         if (host.getAutoDeploy()) {
             // Check for resources modification to trigger redeployment
+            // 检查这个Host下所有已经部署的Web应用
             DeployedApplication[] apps = deployed.values().toArray(new DeployedApplication[0]);
             for (DeployedApplication app : apps) {
                 if (tryAddServiced(app.name)) {
                     try {
+                        // 检查Web应用目录是否有变化
+                        // 如果原来 Web 应用目录被删掉了，就把相应 Context 容器整个销毁掉
+                        // 如果修改过，就重新加载context.reload
                         checkResources(app, false);
                     } finally {
                         removeServiced(app.name);
@@ -1664,6 +1669,7 @@ public class HostConfig implements LifecycleListener {
             }
 
             // Hotdeploy applications
+            //执行部署
             deployApps();
         }
     }

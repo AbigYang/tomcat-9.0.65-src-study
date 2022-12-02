@@ -139,7 +139,12 @@ public final class Bootstrap {
 
     // -------------------------------------------------------- Private Methods
 
-
+    /**
+     * 初始化Tomcat自定义类加载器，路径在catalina.properties文件中配置
+     * commonClassLoader（/common/*）：作为 CatalinaClassLoader 和 SharedClassLoader 的父加载器，解决Tomcat与Web应用共享的类
+     * catalinaClassLoader（/server/*）: 专门加载Tomcat自身的类
+     * sharedClassLoader（/shared/*）：解决多个web应用都依赖同一个第三方jar包，比如Spring，保证只被加载一次，两个Web应用能够共享
+     */
     private void initClassLoaders() {
         try {
             commonLoader = createClassLoader("common", null);
@@ -249,9 +254,9 @@ public final class Bootstrap {
      * @throws Exception Fatal initialization error
      */
     public void init() throws Exception {
-
+        // 初始化类加载器 commonClassLoader、catalinaClassLoader、sharedClassLoader
         initClassLoaders();
-
+        // 设置线程上下文类加载器为catalinaLoader
         Thread.currentThread().setContextClassLoader(catalinaLoader);
 
         SecurityClassLoad.securityClassLoad(catalinaLoader);
@@ -274,6 +279,7 @@ public final class Bootstrap {
         paramValues[0] = sharedLoader;
         Method method =
             startupInstance.getClass().getMethod(methodName, paramTypes);
+        // 调用Catalina的setParentClassLoader,设置为sharedClassLoader
         method.invoke(startupInstance, paramValues);
 
         catalinaDaemon = startupInstance;

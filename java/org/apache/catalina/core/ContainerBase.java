@@ -1362,9 +1362,13 @@ public abstract class ContainerBase extends LifecycleMBeanBase implements Contai
                     // is performed under the web app's class loader
                     originalClassLoader = ((Context) container).bind(false, null);
                 }
+                //1. 调用当前容器的backgroundProcess方法
                 container.backgroundProcess();
+                //2. 遍历所有的子容器，递归调用processChildren，
+                // 这样当前容器的子孙都会被处理
                 Container[] children = container.findChildren();
                 for (Container child : children) {
+                    // 容器基类有个变量叫做backgroundProcessorDelay，如果大于0，表明子容器有自己的后台线程，无需父容器来调用它的processChildren方法
                     if (child.getBackgroundProcessorDelay() <= 0) {
                         processChildren(child);
                     }
